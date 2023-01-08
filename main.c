@@ -3,7 +3,6 @@
 #include <unistd.h>
 #include <stdlib.h>
 
-//TODO: create a basic function that runs a clock from the given time to 0;
 void update_timer(int *hours,  int *minutes,  int *seconds) {
   (*seconds)++;
 
@@ -18,23 +17,25 @@ void update_timer(int *hours,  int *minutes,  int *seconds) {
   }
 }
 
-void print_timer(int hours, int minutes, int seconds, int total_hours, int total_minutes, int total_seconds) {
-  int print_seconds = total_seconds - seconds;
-  int print_minutes = total_minutes - minutes;
-  int print_hours = total_hours - hours;
+char* timer(int hours, int minutes, int seconds, int total_hours, int total_minutes, int total_seconds) {
+  int timer_seconds = total_seconds - seconds;
+  int timer_minutes = total_minutes - minutes;
+  int timer_hours = total_hours - hours;
 
-  if (print_seconds <= -1) {
-    print_seconds = 60 + print_seconds;
-    print_minutes--;
+  if (timer_seconds <= -1) {
+    timer_seconds = 60 + timer_seconds;
+    timer_minutes--;
   }
 
-  if (print_minutes <= -1) {
-    print_minutes = 60 + print_minutes;
-    print_hours--;
+  if (timer_minutes <= -1) {
+    timer_minutes = 60 + timer_minutes;
+    timer_hours--;
   }
 
-  printf("total time: %02d:%02d:%02d\ntimer %02d:%02d:%02d\n", total_hours, total_minutes, total_seconds, print_hours, print_minutes, print_seconds);
-  printf("vars: %02d:%02d:%02d\n", hours, minutes, seconds);
+  char *buf = (char *) malloc(33);
+  snprintf(buf, 33, "%02d:%02d:%02d", timer_hours, timer_minutes, timer_seconds);
+
+  return buf;
 }
 
 void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds) {
@@ -45,7 +46,9 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds) {
   while(1) {
     system("clear");
 
-    print_timer(hours, minutes, seconds, usr_hours, usr_minutes, usr_seconds);
+    char* timer_str = timer(hours, minutes, seconds, usr_hours, usr_minutes, usr_seconds);
+    printf("%s", timer_str);
+    free(timer_str);
 
     fflush(stdout);
     sleep(1);
