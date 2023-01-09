@@ -1,7 +1,4 @@
-#include <stdio.h>
-#include <time.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include "include/pomotimer.h"
 
 void update_timer(int *hours,  int *minutes,  int *seconds) {
   (*seconds)++;
@@ -40,8 +37,8 @@ char* timer(int hours, int minutes, int seconds, int total_hours, int total_minu
 
 void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds) {
    int hours = 0;
-   int minutes = 59;
-   int seconds = 59;
+   int minutes = 0;
+   int seconds = 0;
 
   while(1) {
     system("clear");
@@ -63,10 +60,4 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds) {
 
   printf("Sucessfully finished timer.\n");
   fflush(stdout);
-}
-
-int main() {
-  pomodoro_timer(2, 0, 5);
-
-  exit(0);
 }
