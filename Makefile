@@ -2,7 +2,7 @@
 
 IDIR = src/include
 CC = gcc
-CFLAGS = -W -Wall -Wextra -Werror -ansi -pedantic -I$(IDIR)
+CFLAGS = -W -Wall -Wextra -Werror -pedantic -I$(IDIR)
 
 ODIR=src/obj
 
