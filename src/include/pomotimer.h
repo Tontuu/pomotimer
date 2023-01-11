@@ -11,7 +11,6 @@
 #include "../lib/args.h"
 
 typedef enum {
-  GET,
   SET,
   SET_AND_INTERACTIVE,
 } Mode;

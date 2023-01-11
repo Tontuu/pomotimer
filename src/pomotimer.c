@@ -44,18 +44,6 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
   int seconds = 0;
 
   while (1) {
-    if (mode == GET) {
-      char file_str[50];
-
-      if (read_from_tempfile(file_str) == -1) {
-        fprintf(stderr, "There's no pomodoro session running at the moment\n");
-        exit(1);
-      }
-
-      printf("%s", file_str);
-      exit(0);
-    }
-
     char *timer_str =
         timer(hours, minutes, seconds, usr_hours, usr_minutes, usr_seconds);
 
