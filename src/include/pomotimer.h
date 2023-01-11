@@ -5,15 +5,20 @@
 #include <time.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <errno.h>
-#include <string.h>
 
-void panic();
+#include "pomotimer_utils.h"
 
-int write_into_tempfile(char* str);
-int read_from_tempfile(char* file_str);
+#include "../lib/args.h"
 
-void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds, char mode);
+typedef enum {
+  GET,
+  SET,
+  SET_AND_INTERACTIVE,
+} Mode;
+
+void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds, Mode mode);
+int pomodoro_timer_get();
+
 char* timer(int hours, int minutes, int seconds, int total_hours, int total_minutes, int total_seconds);
 void update_timer(int *hours,  int *minutes,  int *seconds);
 
