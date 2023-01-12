@@ -1,13 +1,5 @@
 #include "include/pomotimer.h"
 
-void print_menu(int hours, int minutes, int seconds, int break_time) {
-  printf("----\n");
-  printf("Pomotimer\n");
-  printf("----\n\n");
-  printf("Hours [%dh]\nminutes [%dm]\nSeconds [%ds]\nBreak-time "
-         "[%dm]\n", hours, minutes, seconds, break_time);
-}
-
 void update_timer(int *hours, int *minutes, int *seconds) {
   (*seconds)++;
 
@@ -50,14 +42,14 @@ void run_break(Mode mode, int break_minutes) {
   int seconds = 0;
   int minutes = 0;
 
-  while(1) {
+  while (1) {
     char *timer_str = timer(hours, minutes, seconds, 0, break_minutes, 0);
     char buf[100];
     snprintf(buf, 33, "%s (B)", timer_str);
 
     if (mode == SET)
       if (write_into_tempfile(buf) == -1)
-	panic(ERRNO);
+        panic(ERRNO);
 
     if (mode == SET_AND_INTERACTIVE) {
       system("clear");
@@ -70,8 +62,7 @@ void run_break(Mode mode, int break_minutes) {
 
     update_timer(&hours, &minutes, &seconds);
 
-    if (hours == 0 && minutes == break_minutes &&
-        seconds == 1) 
+    if (hours == 0 && minutes == break_minutes && seconds == 1)
       break;
   }
 }
@@ -84,7 +75,7 @@ void reset(int *hours, int *minutes, int *seconds) {
 
 void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
                     int usr_break_time, Mode mode) {
-  Time time = { usr_hours, usr_minutes, usr_seconds, usr_break_time };
+  Time time = {usr_hours, usr_minutes, usr_seconds, usr_break_time};
   int hours = 0;
   int minutes = 0;
   int seconds = 0;
@@ -101,7 +92,7 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
     time = check_values(time_values);
   }
 
-  do  {
+  do {
     char *timer_str =
         timer(hours, minutes, seconds, time.hours, time.minutes, time.seconds);
 
@@ -110,8 +101,7 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
       snprintf(buf, 33, "%s (%d/%d)", timer_str, current_session, max_sessions);
 
       if (write_into_tempfile(buf) == -1)
-	panic(ERRNO);
-      
+        panic(ERRNO);
     }
 
     if (mode == SET_AND_INTERACTIVE) {
@@ -129,17 +119,21 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
         seconds == time.seconds + 1) {
 
       if (current_session == max_sessions)
-	break;
+        break;
 
+      notify(NOTIFY_BREAK, time);
       run_break(mode, time.break_time);
+      notify(NOTIFY_FINISH_SESSION, time);
 
       reset(&hours, &minutes, &seconds);
       current_session++;
     }
   } while (current_session <= max_sessions);
 
-  if (mode == SET && remove_tempfile() == -1)
+  if (mode == SET && remove_tempfile() == -1) {
     panic(ERRNO);
+    notify(NOTIFY_FINISH_POMODORO, time);
+  }
 
   if (mode == SET_AND_INTERACTIVE)
     printf("Sucessfully finished timer\n");

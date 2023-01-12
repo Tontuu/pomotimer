@@ -52,13 +52,10 @@ int read_from_tempfile(char *file_str) {
   return -1;
 }
 
-int remove_tempfile() {
-  return remove(TMP_FILE);
-}
-
+int remove_tempfile() { return remove(TMP_FILE); }
 
 int check_time(int time_value) {
-  if (time_value > 60 || time_value < 0 ) {
+  if (time_value > 60 || time_value < 0) {
     return -1;
   }
 
@@ -106,4 +103,44 @@ Time check_values(int *time_values) {
   time.break_time = time_values[3];
 
   return time;
+}
+
+void print_menu(int hours, int minutes, int seconds, int break_time) {
+  printf("----\n");
+  printf("Pomotimer\n");
+  printf("----\n\n");
+  printf("Hours [%dh]\nminutes [%dm]\nSeconds [%ds]\nBreak-time "
+         "[%dm]\n",
+         hours, minutes, seconds, break_time);
+}
+
+void notify(NotificType notification, Time time) {
+  char msg[100];
+
+  if (notification == NOTIFY_BREAK) {
+    char buf[100];
+    snprintf(
+        buf, 100,
+        "Focus round of <b><span color=\"yellow\">%dh%dm</span></b> is "
+        "complete, chilling for <b><span color=\"yellow\">%dm</span></b>.\n",
+        time.hours, time.minutes, time.break_time);
+    strcpy(msg, buf);
+  }
+
+  if (notification == NOTIFY_FINISH_SESSION) {
+    char buf[100];
+    snprintf(buf, 100,
+             "Break of <b><span color=\"yellow\">%dm</span></b> is down\n",
+             time.break_time);
+    strcpy(msg, buf);
+  }
+
+  if (notification == NOTIFY_FINISH_POMODORO)
+    strcpy(msg, "Pomodoro session is finished\n");
+
+  char command[200];
+  snprintf(command, 200,
+           "aplay assets/sound.wav -q && notify-send 'Pomotimer' '\n%s'", msg);
+
+  system(command);
 }

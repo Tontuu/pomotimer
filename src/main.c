@@ -2,7 +2,7 @@
 
 char* help_message = "Usage: pomotimer [OPTION...]\n\
 \n\
-Pomotimer is a pomodor that made focusing to work with lemonbar\n\
+Pomotimer is a pomodoro program which was made to work with lemonbar as main goal\n\
 \n\
 Subcommands:\n\
     get             Get pomodoro current session status\n\

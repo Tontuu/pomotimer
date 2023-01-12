@@ -1,9 +1,9 @@
 #ifndef POMOTIMER_UTILS_H
 #define POMOTIMER_UTILS_H
 
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <errno.h>
 #include <string.h>
 
 #include "../lib/args.h"
@@ -20,6 +20,12 @@ typedef enum {
   INVALID_BREAK_TIME
 } Error;
 
+typedef enum {
+  NOTIFY_BREAK,
+  NOTIFY_FINISH_SESSION,
+  NOTIFY_FINISH_POMODORO,
+} NotificType;
+
 typedef struct {
   int hours;
   int minutes;
@@ -34,5 +40,7 @@ int read_from_tempfile(char *file_str);
 int remove_tempfile();
 Time parse_time_args(ArgParser *parser);
 Time check_values(int *time_values);
+void print_menu(int hours, int minutes, int seconds, int break_time);
+void notify(NotificType notification, Time time);
 
 #endif
