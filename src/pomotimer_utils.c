@@ -1,5 +1,7 @@
 #include "include/pomotimer_utils.h"
 
+char *PATH_TO_SOUND = "/path/to/your/sound.wav";
+
 void panic(Error error) {
   char error_str[100];
   if (error == ERRNO)
@@ -119,11 +121,10 @@ void notify(NotificType notification, Time time) {
 
   if (notification == NOTIFY_BREAK) {
     char buf[100];
-    snprintf(
-        buf, 100,
-        "Focus round of <b><span color=\"yellow\">%dh%dm</span></b> is "
-        "complete, chilling for <b><span color=\"yellow\">%dm</span></b>.\n",
-        time.hours, time.minutes, time.break_time);
+    snprintf(buf, 100,
+             "Focus round of <b><span color=\"yellow\">%dh%dm</span></b> is "
+             "complete, chilling for %dm.\n",
+             time.hours, time.minutes, time.break_time);
     strcpy(msg, buf);
   }
 
@@ -139,8 +140,8 @@ void notify(NotificType notification, Time time) {
     strcpy(msg, "Pomodoro session is finished\n");
 
   char command[200];
-  snprintf(command, 200,
-           "aplay assets/sound.wav -q && notify-send 'Pomotimer' '\n%s'", msg);
+  snprintf(command, 200, "aplay %s -q && notify-send 'Pomotimer' '\n%s'",
+           PATH_TO_SOUND, msg);
 
   system(command);
 }
