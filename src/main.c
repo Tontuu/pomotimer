@@ -1,19 +1,30 @@
 #include "include/pomotimer.h"
 
+char* help_message = "Usage: pomotimer [OPTION...]\n\
+\n\
+Pomotimer is a pomodor that made focusing to work with lemonbar\n\
+\n\
+Subcommands:\n\
+    get             Get pomodoro current session status\n\
+    set <TIME>      Set pomodoro in the format of hours, minutes, seconds and break time\n\
+\n\
+Options:\n\
+    -h, --help      Show this help message and exit";
+
 int main(int argc, char **argv) {
   ArgParser *parser = ap_new();
 
   if (!parser)
     panic(ERRNO);
 
-  ap_set_helptext(parser, "Usage: pomotimer...");
+  ap_set_helptext(parser, help_message);
   ap_set_version(parser, "1.0");
 
   ArgParser *get_cmd = ap_cmd(parser, "get");
-  ap_set_helptext(get_cmd, "Usage: get...");
+  ap_set_helptext(get_cmd, "Return current session status");
 
   ArgParser *set_cmd = ap_cmd(parser, "set");
-  ap_set_helptext(set_cmd, "Usage: set...");
+  ap_set_helptext(set_cmd, "Usage: pomodoro set <hh> <mm> <ss> <break-time>");
 
   ap_str_opt(parser, "time", 0);
   ap_str_opt(set_cmd, "time", 0);
