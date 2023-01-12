@@ -20,6 +20,9 @@ void panic(Error error) {
   if (error == INVALID_SECONDS)
     strcpy(error_str, "Unable to accept seconds argument");
 
+  if (error == INVALID_BREAK_TIME)
+    strcpy(error_str, "Unable to accept break time argument");
+
   fprintf(stderr, "ERROR: %s\n", error_str);
   exit(1);
 }
@@ -63,21 +66,23 @@ int check_time(int time_value) {
 }
 
 Time parse_time_args(ArgParser *parser) {
-  if (ap_count_args(parser) < 3)
+  if (ap_count_args(parser) < 4)
     panic(TOO_FEW_ARGUMENTS);
 
-  if (ap_count_args(parser) > 3)
+  if (ap_count_args(parser) > 4)
     panic(TOO_MUCH_ARGUMENTS);
 
   int *time_values = ap_args_as_ints(parser);
 
-  if (ap_count_args(parser) > 3)
+  if (ap_count_args(parser) > 4)
     panic(TOO_MUCH_ARGUMENTS);
 
-  if (ap_count_args(parser) < 3)
+  if (ap_count_args(parser) < 4)
     panic(TOO_FEW_ARGUMENTS);
 
-  return check_values(time_values);
+  Time time = check_values(time_values);
+  free(time_values);
+  return time;
 }
 
 Time check_values(int *time_values) {
@@ -92,10 +97,13 @@ Time check_values(int *time_values) {
   if (time_values[2] > 60 || time_values[2] < 0)
     panic(INVALID_SECONDS);
 
+  if (time_values[3] > 60 || time_values[2] < 0)
+    panic(INVALID_BREAK_TIME);
+
   time.hours = time_values[0];
   time.minutes = time_values[1];
   time.seconds = time_values[2];
+  time.break_time = time_values[3];
 
-  free(time_values);
   return time;
 }

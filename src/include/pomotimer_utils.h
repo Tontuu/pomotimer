@@ -17,12 +17,14 @@ typedef enum {
   INVALID_HOUR,
   INVALID_MINUTE,
   INVALID_SECONDS,
+  INVALID_BREAK_TIME
 } Error;
 
 typedef struct {
   int hours;
   int minutes;
   int seconds;
+  int break_time;
 } Time;
 
 void panic(Error error);

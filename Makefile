@@ -1,5 +1,5 @@
 ############################# Makefile ##########################
-TARGET_EXEC ?= ../main
+TARGET_EXEC ?= ../pomotimer
 
 BUILD_DIR ?= ./build
 SRC_DIRS ?= ./src

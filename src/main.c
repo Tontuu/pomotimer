@@ -20,7 +20,6 @@ int main(int argc, char **argv) {
 
   ap_parse(parser, argc, argv);
 
-
   if (ap_has_cmd(parser)) {
     char *ap_cmd_str = ap_cmd_name(parser);
     if (strcmp(ap_cmd_str, "get") == 0) {
@@ -30,14 +29,13 @@ int main(int argc, char **argv) {
     if (strcmp(ap_cmd_str, "set") == 0) {
       Time time = parse_time_args(set_cmd);
       ap_free(parser);
-      pomodoro_timer(time.hours, time.minutes, time.seconds, SET);
+      pomodoro_timer(time.hours, time.minutes, time.seconds, time.break_time, SET);
     }
   } else {
     ap_free(parser);
-    pomodoro_timer(0, 1, 0, SET_AND_INTERACTIVE);
+    pomodoro_timer(0, 25, 0, 5, SET_AND_INTERACTIVE);
     system("clear");
   }
-  printf("Sucessfully finished timer\n");
 
   return 0;
 }
