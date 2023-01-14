@@ -9,6 +9,7 @@ Subcommands:\n\
     set <TIME>      Set pomodoro in the format of hours, minutes, seconds and break time\n\
     pause           Pause pomodoro session\n\
     unpause         Unpause pomodoro session\n\
+    skip            Skip pomodoro current session\n\
 \n\
 Options:\n\
     -h, --help      Show this help message and exit";
