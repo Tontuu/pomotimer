@@ -171,8 +171,6 @@ void notify(NotificType notification, Time time) {
 
   int status_code = system(command);
 
-  system("pwd");
-
   if (status_code == 127)
     panic(NO_PAPLAY);
 }
