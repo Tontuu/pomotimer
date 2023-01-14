@@ -1,0 +1,37 @@
+#!/bin/bash
+
+# Get sudo
+if [ $EUID != 0 ]; then
+    sudo "$0" "$@"
+    exit $?
+fi
+
+# Check programs
+if ! [ -x "$(command -v paplay)" ]; then
+    echo "paplay: executable not found" >&2
+    exit 1
+else
+    echo "paplay: found" >&2
+fi
+
+if ! [ -x "$(command -v notify-send)" ]; then
+    echo "notify-send: executable not found" >&2
+    exit 1
+else
+    echo "notify-send: found" >&2
+fi
+
+# Create folders
+mkdir -p /usr/share/pomotimer/ >/dev/null 2>&1 && echo "Creating directory..."
+sleep 0.5
+cp -r assets/ /usr/share/pomotimer/ >/dev/null 2>&1 && echo "Copying important files..."
+sleep 0.5
+
+make
+
+sleep 0.5
+cp pomotimer /usr/bin/ && echo "Copying executable file..."
+sleep 0.2
+
+echo "Done"
+exit 0
