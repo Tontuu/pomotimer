@@ -44,12 +44,39 @@ void run_break(Mode mode, int break_minutes) {
 
   while (1) {
     char *timer_str = timer(hours, minutes, seconds, 0, break_minutes, 0);
+
     char buf[100];
+    if (mode == SET) {
+      char status = get_status_at_tempfile();
+
+      if (status == 'P') {
+        snprintf(buf, 33, "%s (P)", timer_str);
+
+        int success = write_into_tempfile(buf);
+        if (!success)
+          panic(ERRNO);
+
+        sleep(1);
+        continue;
+      }
+
+      if (status == 'S') {
+        int success = write_into_tempfile(timer_str);
+        if (!success)
+          panic(ERRNO);
+
+        free(timer_str);
+        break;
+      }
+    }
+
     snprintf(buf, 33, "%s (B)", timer_str);
 
-    if (mode == SET)
-      if (write_into_tempfile(buf) == -1)
+    if (mode == SET) {
+      int success = write_into_tempfile(buf);
+      if (!success)
         panic(ERRNO);
+    }
 
     if (mode == SET_AND_INTERACTIVE) {
       system("clear");
@@ -97,11 +124,48 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
         timer(hours, minutes, seconds, time.hours, time.minutes, time.seconds);
 
     if (mode == SET) {
+      char status = get_status_at_tempfile();
+
+      if (status == 'P') {
+        char buf[100];
+        snprintf(buf, 33, "%s (P)", timer_str);
+
+        int success = write_into_tempfile(buf);
+        if (!success)
+          panic(ERRNO);
+
+        sleep(1);
+        continue;
+      }
+
+      if (status == 'S') {
+        if (current_session == max_sessions)
+          break;
+
+        int success = write_into_tempfile(timer_str);
+
+        if (!success)
+          panic(ERRNO);
+
+        notify(NOTIFY_BREAK, time);
+        run_break(mode, time.break_time);
+        notify(NOTIFY_FINISH_SESSION, time);
+
+        reset(&hours, &minutes, &seconds);
+        current_session++;
+        continue;
+      }
+    }
+
+    if (mode == SET) {
       char buf[100];
       snprintf(buf, 33, "%s (%d/%d)", timer_str, current_session, max_sessions);
 
-      if (write_into_tempfile(buf) == -1)
-        panic(ERRNO);
+      if (mode == SET) {
+        int success = write_into_tempfile(buf);
+        if (!success)
+          panic(ERRNO);
+      }
     }
 
     if (mode == SET_AND_INTERACTIVE) {
@@ -118,37 +182,110 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
     if (hours == time.hours && minutes == time.minutes &&
         seconds == time.seconds + 1) {
 
-      if (current_session == max_sessions)
-        break;
-
-      notify(NOTIFY_BREAK, time);
-      run_break(mode, time.break_time);
-      notify(NOTIFY_FINISH_SESSION, time);
+      if (current_session != max_sessions) {
+        notify(NOTIFY_BREAK, time);
+        run_break(mode, time.break_time);
+        notify(NOTIFY_FINISH_SESSION, time);
+      }
 
       reset(&hours, &minutes, &seconds);
       current_session++;
     }
   } while (current_session <= max_sessions);
 
-  if (mode == SET && remove_tempfile() == -1) {
+  if (mode == SET && remove_tempfile() == -1)
     panic(ERRNO);
-    notify(NOTIFY_FINISH_POMODORO, time);
-  }
 
   if (mode == SET_AND_INTERACTIVE)
     printf("Sucessfully finished timer\n");
 
+  notify(NOTIFY_FINISH_POMODORO, time);
   fflush(stdout);
 }
 
 int pomodoro_timer_get() {
   char file_str[50];
 
-  if (read_from_tempfile(file_str) == -1) {
+  int success = read_from_tempfile(file_str);
+  if (!success) {
     fprintf(stderr, "There's no pomodoro session running at the moment\n");
-    return -1;
+    return 1;
   }
   printf("%s", file_str);
 
   return 0;
+}
+
+int pomodoro_pause() {
+  char file_str[50];
+  int success = read_from_tempfile(file_str);
+  if (!success) {
+    fprintf(stderr, "There's no pomodoro session running at the moment\n");
+    return 0;
+  }
+
+  int length = strlen(file_str);
+  if (length > 13)
+    file_str[length - 7] = '\0'; // In normal session `00:00:00 (1/4)`
+
+  else
+    file_str[length - 5] = '\0'; // In break session `00:00:00 (B)`
+
+  strcat(file_str, " (P)");
+
+  success = write_into_tempfile(file_str);
+  if (!success)
+    panic(ERRNO);
+
+  return 1;
+}
+
+int pomodoro_unpause() {
+  char file_str[50];
+  int success = read_from_tempfile(file_str);
+
+  if (!success) {
+    fprintf(stderr, "There's no pomodoro session running at the moment\n");
+    return 0;
+  }
+
+  int length = strlen(file_str);
+
+  if (strchr(file_str, 'P') != NULL)
+    file_str[length - 5] =
+        '\0'; // Paused string looks like that: `00:00:00 (P)`
+  else {
+    fprintf(stderr, "There's no pomodoro paused session\n");
+    return 0;
+  }
+
+  success = write_into_tempfile(file_str);
+  if (!success)
+    panic(ERRNO);
+
+  return 1;
+}
+
+int pomodoro_skip() {
+  char file_str[50];
+  int success = read_from_tempfile(file_str);
+  if (!success) {
+    fprintf(stderr, "There's no pomodoro session running at the moment\n");
+    return 0;
+  }
+
+  int length = strlen(file_str);
+  if (length > 13)
+    file_str[length - 7] = '\0'; // In normal session `00:00:00 (1/4)`
+
+  else
+    file_str[length - 5] = '\0'; // In break session `00:00:00 (B)`
+
+  strcat(file_str, " (S)");
+
+  success = write_into_tempfile(file_str);
+  if (!success)
+    panic(ERRNO);
+
+  return 1;
 }

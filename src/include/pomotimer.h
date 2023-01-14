@@ -15,6 +15,12 @@ typedef enum {
   SET_AND_INTERACTIVE,
 } Mode;
 
+int pomodoro_skip();
+
+int pomodoro_pause();
+
+int pomodoro_unpause();
+
 void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
                     int usr_break_time, Mode mode);
 int pomodoro_timer_get();

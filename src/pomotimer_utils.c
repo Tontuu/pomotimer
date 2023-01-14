@@ -1,6 +1,5 @@
 #include "include/pomotimer_utils.h"
 
-char *PATH_TO_SOUND = "/path/to/your/sound.wav";
 
 void panic(Error error) {
   char error_str[100];
@@ -25,6 +24,10 @@ void panic(Error error) {
   if (error == INVALID_BREAK_TIME)
     strcpy(error_str, "Unable to accept break time argument");
 
+  if (error == NO_PAPLAY)
+    strcpy(error_str, "Unable to play notification sound. Paplay/notify-send "
+                      "binary was not found.");
+
   fprintf(stderr, "ERROR: %s\n", error_str);
   exit(1);
 }
@@ -35,10 +38,10 @@ int write_into_tempfile(char *str) {
   if (fp != NULL) {
     fprintf(fp, "%s\n", str);
     fclose(fp);
-    return 0;
+    return 1;
   }
 
-  return -1;
+  return 0;
 }
 
 int read_from_tempfile(char *file_str) {
@@ -48,10 +51,34 @@ int read_from_tempfile(char *file_str) {
     if (!fgets(file_str, 50, fp))
       panic(ERRNO);
     fclose(fp);
-    return 0;
+    return 1;
   }
 
-  return -1;
+  return 0;
+}
+
+char get_status_at_tempfile() {
+  char file_str[50];
+  char status;
+
+  FILE *fp = fopen("/tmp/tmp_pomotimer", "r");
+
+  if (fp != NULL) {
+    if (!fgets(file_str, 50, fp))
+      panic(ERRNO);
+
+    if (strchr(file_str, 'P') != NULL)
+      status = 'P';
+
+    if (strchr(file_str, 'S') != NULL)
+      status = 'S';
+
+    fclose(fp);
+
+    return status;
+  }
+
+  return 0;
 }
 
 int remove_tempfile() { return remove(TMP_FILE); }
@@ -117,22 +144,20 @@ void print_menu(int hours, int minutes, int seconds, int break_time) {
 }
 
 void notify(NotificType notification, Time time) {
+  char *path_to_sound = "/usr/share/pomotimer/assets/sound.wav";
+
   char msg[100];
 
   if (notification == NOTIFY_BREAK) {
     char buf[100];
-    snprintf(buf, 100,
-             "Focus round of <b><span color=\"yellow\">%dh%dm</span></b> is "
-             "complete, chilling for %dm.\n",
-             time.hours, time.minutes, time.break_time);
+    snprintf(buf, 100, "Focus session is complete, chilling for %dm.\n",
+             time.break_time);
     strcpy(msg, buf);
   }
 
   if (notification == NOTIFY_FINISH_SESSION) {
     char buf[100];
-    snprintf(buf, 100,
-             "Break of <b><span color=\"yellow\">%dm</span></b> is down\n",
-             time.break_time);
+    snprintf(buf, 100, "Break of %dm is down\n", time.break_time);
     strcpy(msg, buf);
   }
 
@@ -140,8 +165,14 @@ void notify(NotificType notification, Time time) {
     strcpy(msg, "Pomodoro session is finished\n");
 
   char command[200];
-  snprintf(command, 200, "aplay %s -q && notify-send 'Pomotimer' '\n%s'",
-           PATH_TO_SOUND, msg);
+  snprintf(command, 200,
+           "paplay %s >/dev/null 2>&1 && notify-send 'Pomotimer' '\n%s'",
+           path_to_sound, msg);
 
-  system(command);
+  int status_code = system(command);
+
+  system("pwd");
+
+  if (status_code == 127)
+    panic(NO_PAPLAY);
 }

@@ -5,6 +5,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
+#include <unistd.h>
 
 #include "../lib/args.h"
 
@@ -13,11 +15,12 @@
 typedef enum {
   TOO_FEW_ARGUMENTS,
   TOO_MUCH_ARGUMENTS,
-  ERRNO,
   INVALID_HOUR,
   INVALID_MINUTE,
   INVALID_SECONDS,
-  INVALID_BREAK_TIME
+  INVALID_BREAK_TIME,
+  ERRNO,
+  NO_PAPLAY,
 } Error;
 
 typedef enum {
@@ -35,6 +38,7 @@ typedef struct {
 
 void panic(Error error);
 
+char get_status_at_tempfile();
 int write_into_tempfile(char *str);
 int read_from_tempfile(char *file_str);
 int remove_tempfile();
