@@ -1,9 +1,10 @@
 #!/bin/bash
 
 # Get sudo
-if [ $EUID != 0 ]; then
-    sudo "$0" "$@"
-    exit $?
+if [[ $UID != 0 ]]; then
+    echo "Please run this script with sudo:"
+    echo "sudo $0 $*"
+    exit 1
 fi
 
 # Check programs

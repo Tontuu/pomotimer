@@ -1,12 +1,12 @@
 # Pomotimer
-## A pomomodoro timer.
+## A pomomodoro timer for my lemonbar.
 
-## Setup
+### Setup
 ```console
-./configure
+sudo ./configure
 ```
 
-## Help command
+### Help command
 ```console
 pomotimer -h
 ```
