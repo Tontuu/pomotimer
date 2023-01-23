@@ -3,7 +3,7 @@
 
 ### Setup
 ```console
-sudo ./configure
+./configure
 ```
 
 ### Some examples
