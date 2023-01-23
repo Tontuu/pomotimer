@@ -3,8 +3,13 @@
 
 void panic(Error error) {
   char error_str[100];
-  if (error == ERRNO)
-    strcpy(error_str, strerror(errno));
+  if (error == ERRNO) strcpy(error_str, strerror(errno));
+
+  if (error == ALREADY_RUNNING)
+      strcpy(error_str, "Pomotimer session is already running on this machine.");
+
+  if (error == EXIT)
+      strcpy(error_str, "Could not exit from pomotimer session. Check if there's a session running.");
 
   if (error == TOO_FEW_ARGUMENTS)
     strcpy(error_str, "Too few arguments given");
@@ -61,7 +66,7 @@ char get_status_at_tempfile() {
   char file_str[50];
   char status;
 
-  FILE *fp = fopen("/tmp/tmp_pomotimer", "r");
+  FILE *fp = fopen(TMP_FILE, "r");
 
   if (fp != NULL) {
     if (!fgets(file_str, 50, fp))
@@ -144,7 +149,11 @@ void print_menu(int hours, int minutes, int seconds, int break_time) {
 }
 
 void notify(NotificType notification, Time time) {
-  char *path_to_sound = "/usr/share/pomotimer/assets/sound.wav";
+  struct passwd *pw = getpwuid(getuid());
+  char *homedir = pw->pw_dir;
+
+  char sound_path[512];
+  snprintf(sound_path, 512, "%s/%s", homedir, SOUND_PATH);
 
   char msg[100];
 
@@ -164,13 +173,53 @@ void notify(NotificType notification, Time time) {
   if (notification == NOTIFY_FINISH_POMODORO)
     strcpy(msg, "Pomodoro session is finished\n");
 
-  char command[200];
-  snprintf(command, 200,
-           "paplay %s >/dev/null 2>&1 && notify-send 'Pomotimer' '\n%s'",
-           path_to_sound, msg);
+  char command[1024];
+  snprintf(command, 1024,
+           "paplay --volume=32768 %s >/dev/null 2>&1 && notify-send 'Pomotimer' '\n%s'",
+           sound_path, msg);
 
   int status_code = system(command);
 
   if (status_code == 127)
     panic(NO_PAPLAY);
+}
+
+
+int format_minutes_to_hours(char buf[512], int minutes)
+{
+    int hours = minutes / 60;
+    int remaining_minutes = minutes % 60;
+    return snprintf(buf, 512, "%02dh%02dm", hours, remaining_minutes);
+}
+
+int add_to_db(const char* total_time)
+{
+    int success = 1;
+    struct passwd *pw = getpwuid(getuid());
+    char *homedir = pw->pw_dir;
+
+    char db_path[512];
+    snprintf(db_path, 512, "%s/%s", homedir, DB_PATH);
+
+    time_t t = time(NULL);
+    struct tm tm = *localtime(&t);
+
+    char date[1024];
+    snprintf(date, 1024, "%d/%02d/%02d", tm.tm_mday, tm.tm_mon + 1, tm.tm_year + 1900);
+
+    FILE *fp = fopen(db_path, "r");
+    if (fp == NULL) {
+        fp = fopen(db_path, "w");
+        fprintf(fp, "Session,Date,Time\n");
+        rewind(fp);
+    }
+
+    fp = fopen(db_path, "a");
+    if (fp != NULL) {
+        fprintf(fp, "1,%s,%s\n", date, total_time);
+        fclose(fp);
+        return success;
+    }
+
+    return !success;
 }

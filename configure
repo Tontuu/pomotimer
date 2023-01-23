@@ -1,12 +1,5 @@
 #!/bin/bash
 
-# Get sudo
-if [[ $UID != 0 ]]; then
-    echo "Please run this script with sudo:"
-    echo "sudo $0 $*"
-    exit 1
-fi
-
 # Check programs
 if ! [ -x "$(command -v paplay)" ]; then
     echo "paplay: executable not found" >&2
@@ -23,16 +16,13 @@ else
 fi
 
 # Create folders
-mkdir -p /usr/share/pomotimer/ >/dev/null 2>&1 && echo "Creating directory..."
+mkdir -p $HOME/.local/share/pomotimer/ >/dev/null 2>&1 && echo "Creating directory..."
 sleep 0.5
-cp -r assets/ /usr/share/pomotimer/ >/dev/null 2>&1 && echo "Copying important files..."
+cp -r assets/ $HOME/.local/share/pomotimer/ >/dev/null 2>&1 && echo "Copying important files..."
 sleep 0.5
 
 make
 
-sleep 0.5
-cp pomotimer /usr/bin/ && echo "Copying executable file..."
-sleep 0.2
-
 echo "Done"
+echo "Move pomotimer binary file to your preferred path"
 exit 0

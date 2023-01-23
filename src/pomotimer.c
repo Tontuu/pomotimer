@@ -1,20 +1,24 @@
 #include "include/pomotimer.h"
 
-void update_timer(int *hours, int *minutes, int *seconds) {
+int update_timer(int *hours, int *minutes, int *seconds) {
+  int elapsed_minutes = 0;
   (*seconds)++;
 
   if (*seconds == 60) {
     *seconds = 0;
     (*minutes)++;
+    elapsed_minutes++;
   }
 
   if (*minutes == 60) {
     *minutes = 0;
     (*hours)++;
   }
+
+  return elapsed_minutes;
 }
 
-char *timer(int hours, int minutes, int seconds, int total_hours,
+void timer(char buf[1024], int hours, int minutes, int seconds, int total_hours,
             int total_minutes, int total_seconds) {
   int timer_seconds = total_seconds - seconds;
   int timer_minutes = total_minutes - minutes;
@@ -30,11 +34,8 @@ char *timer(int hours, int minutes, int seconds, int total_hours,
     timer_hours--;
   }
 
-  char *buf = (char *)malloc(33);
   snprintf(buf, 33, "%02d:%02d:%02d", timer_hours, timer_minutes,
            timer_seconds);
-
-  return buf;
 }
 
 void run_break(Mode mode, int break_minutes) {
@@ -43,14 +44,15 @@ void run_break(Mode mode, int break_minutes) {
   int minutes = 0;
 
   while (1) {
-    char *timer_str = timer(hours, minutes, seconds, 0, break_minutes, 0);
+    char timer_str[1024];
+    timer(timer_str, hours, minutes, seconds, 0, break_minutes, 0);
 
     char buf[100];
     if (mode == SET) {
       char status = get_status_at_tempfile();
 
       if (status == 'P') {
-        snprintf(buf, 33, "%s (P)", timer_str);
+        snprintf(buf, 1028, "%s (P)", timer_str);
 
         int success = write_into_tempfile(buf);
         if (!success)
@@ -65,12 +67,11 @@ void run_break(Mode mode, int break_minutes) {
         if (!success)
           panic(ERRNO);
 
-        free(timer_str);
         break;
       }
     }
 
-    snprintf(buf, 33, "%s (B)", timer_str);
+    snprintf(buf, 1028, "%s (B)", timer_str);
 
     if (mode == SET) {
       int success = write_into_tempfile(buf);
@@ -84,7 +85,6 @@ void run_break(Mode mode, int break_minutes) {
       fflush(stdout);
     }
 
-    free(timer_str);
     sleep(1);
 
     update_timer(&hours, &minutes, &seconds);
@@ -102,13 +102,15 @@ void reset(int *hours, int *minutes, int *seconds) {
 
 void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
                     int usr_break_time, Mode mode) {
-  Time time = {usr_hours, usr_minutes, usr_seconds, usr_break_time};
+  Time time_obj = {usr_hours, usr_minutes, usr_seconds, usr_break_time};
   int hours = 0;
   int minutes = 0;
   int seconds = 0;
+  int total_elapsed_minutes = 0;
 
   int current_session = 1;
   int max_sessions = 4;
+
 
   if (mode == SET_AND_INTERACTIVE) {
     print_menu(usr_hours, usr_minutes, usr_seconds, usr_break_time);
@@ -116,19 +118,19 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
     printf("Input: ");
     scanf("%d%d%d%d", &usr_hours, &usr_minutes, &usr_seconds, &usr_break_time);
     int time_values[5] = {usr_hours, usr_minutes, usr_seconds, usr_break_time};
-    time = check_values(time_values);
+    time_obj = check_values(time_values);
   }
 
   do {
-    char *timer_str =
-        timer(hours, minutes, seconds, time.hours, time.minutes, time.seconds);
+    char timer_str[1024];
+        timer(timer_str, hours, minutes, seconds, time_obj.hours, time_obj.minutes, time_obj.seconds);
 
     if (mode == SET) {
       char status = get_status_at_tempfile();
 
       if (status == 'P') {
         char buf[100];
-        snprintf(buf, 33, "%s (P)", timer_str);
+        snprintf(buf, 1028, "%s (P)", timer_str);
 
         int success = write_into_tempfile(buf);
         if (!success)
@@ -147,9 +149,9 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
         if (!success)
           panic(ERRNO);
 
-        notify(NOTIFY_BREAK, time);
-        run_break(mode, time.break_time);
-        notify(NOTIFY_FINISH_SESSION, time);
+        notify(NOTIFY_BREAK, time_obj);
+        run_break(mode, time_obj.break_time);
+        notify(NOTIFY_FINISH_SESSION, time_obj);
 
         reset(&hours, &minutes, &seconds);
         current_session++;
@@ -159,7 +161,7 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
 
     if (mode == SET) {
       char buf[100];
-      snprintf(buf, 33, "%s (%d/%d)", timer_str, current_session, max_sessions);
+      snprintf(buf, 1040, "%s (%d/%d)", timer_str, current_session, max_sessions);
 
       if (mode == SET) {
         int success = write_into_tempfile(buf);
@@ -174,19 +176,20 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
       fflush(stdout);
     }
 
-    free(timer_str);
     sleep(1);
 
-    update_timer(&hours, &minutes, &seconds);
+    total_elapsed_minutes += update_timer(&hours, &minutes, &seconds);
 
-    if (hours == time.hours && minutes == time.minutes &&
-        seconds == time.seconds + 1) {
+    if (hours == time_obj.hours && minutes == time_obj.minutes &&
+        seconds == time_obj.seconds + 1) {
 
+      #if 0
       if (current_session != max_sessions) {
-        notify(NOTIFY_BREAK, time);
-        run_break(mode, time.break_time);
-        notify(NOTIFY_FINISH_SESSION, time);
+          notify(NOTIFY_BREAK, time_obj);
+          run_break(mode, time_obj.break_time);
+          notify(NOTIFY_FINISH_SESSION, time_obj);
       }
+      #endif
 
       reset(&hours, &minutes, &seconds);
       current_session++;
@@ -196,11 +199,23 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
   if (mode == SET && remove_tempfile() == -1)
     panic(ERRNO);
 
-  if (mode == SET_AND_INTERACTIVE)
-    printf("Sucessfully finished timer\n");
+  if (mode == SET_AND_INTERACTIVE) {
+      system("clear");
+      printf("Sucessfully finished timer\n");
+  }
 
-  notify(NOTIFY_FINISH_POMODORO, time);
+  char total_time[512];
+  format_minutes_to_hours(total_time, total_elapsed_minutes);
+
+
+  if (!add_to_db(total_time)) {
+      panic(ERRNO);
+  }
+
   fflush(stdout);
+
+  notify(NOTIFY_FINISH_POMODORO, time_obj);
+
 }
 
 int pomodoro_timer_get() {

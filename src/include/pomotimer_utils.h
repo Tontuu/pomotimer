@@ -7,12 +7,19 @@
 #include <string.h>
 #include <limits.h>
 #include <unistd.h>
+#include <time.h>
+#include <sys/types.h>
+#include <pwd.h>
 
 #include "../lib/args.h"
 
 #define TMP_FILE "/tmp/tmp_pomotimer"
+#define DB_PATH ".local/share/pomotimer/data.csv"
+#define SOUND_PATH ".local/share/pomotimer/assets/sound.wav"
 
 typedef enum {
+  ALREADY_RUNNING,
+  EXIT,
   TOO_FEW_ARGUMENTS,
   TOO_MUCH_ARGUMENTS,
   INVALID_HOUR,
@@ -38,6 +45,7 @@ typedef struct {
 
 void panic(Error error);
 
+int format_minutes_to_hours(char buf[512], int minutes);
 char get_status_at_tempfile();
 int write_into_tempfile(char *str);
 int read_from_tempfile(char *file_str);
@@ -46,5 +54,6 @@ Time parse_time_args(ArgParser *parser);
 Time check_values(int *time_values);
 void print_menu(int hours, int minutes, int seconds, int break_time);
 void notify(NotificType notification, Time time);
+int add_to_db(const char* total_time);
 
 #endif
