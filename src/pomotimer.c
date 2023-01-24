@@ -183,13 +183,11 @@ void pomodoro_timer(int usr_hours, int usr_minutes, int usr_seconds,
     if (hours == time_obj.hours && minutes == time_obj.minutes &&
         seconds == time_obj.seconds + 1) {
 
-      #if 0
       if (current_session != max_sessions) {
           notify(NOTIFY_BREAK, time_obj);
           run_break(mode, time_obj.break_time);
           notify(NOTIFY_FINISH_SESSION, time_obj);
       }
-      #endif
 
       reset(&hours, &minutes, &seconds);
       current_session++;
