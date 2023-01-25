@@ -43,6 +43,12 @@ typedef struct {
   int break_time;
 } Time;
 
+typedef struct {
+    int sessions;
+    char date[100];
+    char time[100];
+} Cell;
+
 void panic(Error error);
 
 int format_minutes_to_hours(char buf[512], int minutes);
@@ -55,5 +61,7 @@ Time check_values(int *time_values);
 void print_menu(int hours, int minutes, int seconds, int break_time);
 void notify(NotificType notification, Time time);
 int add_to_db(const char* total_time);
+void sum_time(char *time1, char *time2, char buf[100]);
+void sanatize_db(char *db_path);
 
 #endif

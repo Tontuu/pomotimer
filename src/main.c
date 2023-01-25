@@ -21,15 +21,6 @@ int print_stats()
     struct passwd *pw = getpwuid(getuid());
     char *homedir = pw->pw_dir;
 
-    #if 0
-        printf("|        01          12/06/22      01:00:00    |\n");
-        printf("|        03          11/06/22      01:40:00    |\n");
-        printf("[----------------------------------------------]\n");
-        printf("|  TOTAL SESSIONS                 TOTAL TIME   |\n");
-        printf("|        50                        02:40:00    |\n");
-        printf("[----------------------------------------------]\n");
-    #endif
-
     char db_path[512];
     snprintf(db_path, 512, "%s/%s", homedir, DB_PATH);
 
@@ -133,7 +124,6 @@ int print_stats()
 
 int main(int argc, char **argv) {
     ArgParser *parser = ap_new();
-
     if (!parser)
     panic(ERRNO);
 
@@ -229,9 +219,7 @@ int main(int argc, char **argv) {
         ap_free(parser);
         pomodoro_timer(0, 25, 0, 5, SET_AND_INTERACTIVE);
 
-        #if 0
         system("clear");
-        #endif
     }
 
     return 0;

@@ -192,6 +192,152 @@ int format_minutes_to_hours(char buf[512], int minutes)
     return snprintf(buf, 512, "%02dh%02dm", hours, remaining_minutes);
 }
 
+void sum_time(char *time1, char *time2, char buf[100]) {
+    char chars_hours[10];
+    char chars_minutes[10];
+    int hours = 0;
+    int minutes = 0;
+
+    int hours_index = 0;
+    int minutes_index = 0;
+    while(time1) {
+        if (time1[hours_index] == 'h') {
+            chars_hours[hours_index] = '\0';
+            break;
+        }
+        chars_hours[hours_index] = time1[hours_index];
+        hours_index++;
+    }
+    while(time1) {
+        if (time1[hours_index + minutes_index] == 'm') {
+            chars_minutes[minutes_index-1] = '\0';
+            break;
+        }
+        chars_minutes[minutes_index] = time1[hours_index + minutes_index + 1];
+        minutes_index++;
+    }
+
+    hours += atoi(chars_hours);
+    minutes += atoi(chars_minutes);
+    hours_index = 0;
+    minutes_index = 0;
+    while(time2) {
+        if (time2[hours_index] == 'h') {
+            chars_hours[hours_index] = '\0';
+            break;
+        }
+        chars_hours[hours_index] = time2[hours_index];
+        hours_index++;
+    }
+
+    while(time2) {
+        if (time2[hours_index + minutes_index] == 'm') {
+            chars_minutes[minutes_index-1] = '\0';
+            break;
+        }
+        chars_minutes[minutes_index] = time2[hours_index + minutes_index + 1];
+        minutes_index++;
+    }
+
+    hours += atoi(chars_hours);
+    minutes += atoi(chars_minutes);
+
+    if (minutes >= 60) {
+        hours += minutes / 60;
+        minutes = minutes % 60;
+    }
+
+    snprintf(buf, 100, "%dh%02dm\n", hours, minutes);
+}
+
+void sanatize_db(char *db_path) {
+    FILE *fp = fopen(db_path, "r");
+
+    char buffer[1024];
+
+
+    int lines = 0;
+
+    while(!feof(fp))
+    {
+        char c = fgetc(fp);
+        if (c == '\n') lines++;
+    }
+    Cell cells[lines];
+
+    rewind(fp);
+
+    int row = 0;
+    int col = 0;
+
+    while(fgets(buffer, 1024, fp)){
+
+        if (row == 0) {
+            row++;
+            continue;
+        }
+        col = 0;
+        char* value = strtok(buffer, ",");
+
+        while(value) 
+        {
+            switch (col) {
+                case 0:
+                cells[row-1].sessions = atoi(value);
+                break;
+
+                case 1:
+                strcpy(cells[row-1].date, value);
+                break;
+
+                case 2:
+                strcpy(cells[row-1].time, value);
+                break;
+
+                default:
+                break;
+            }
+            value = strtok(NULL,  ",");
+            col++;
+        }
+        row++;
+    }
+
+    Cell new_cells[lines];
+    int index_to_remove;
+    int index = 0;
+
+    int length = lines - 1;
+
+    for (int i = 0; i < lines-1; i++) {
+        index_to_remove = 0;
+        for (int j = i + 1; j < lines-1; j++) {
+            if (strcmp(cells[i].date, cells[j].date) == 0) {
+                cells[j].sessions = cells[j].sessions + 1;
+                sum_time(cells[j].time, cells[i].time, cells[j].time);
+                index_to_remove = j;
+                length--;
+            }
+        }
+
+        if (index_to_remove == 0) {
+            new_cells[index] = cells[i];
+            index++;
+        }
+    }
+
+    printf("--------------------\n");
+
+    fp = fopen(db_path, "w");
+
+    if (fp != NULL) {
+        fprintf(fp, "Session,Date,Time\n");
+        for (int i = 0; i < length; i++) {
+            fprintf(fp, "%d,%s,%s", new_cells[i].sessions, new_cells[i].date, new_cells[i].time);
+        }
+    }
+}
+
 int add_to_db(const char* total_time)
 {
     int success = 1;
@@ -218,6 +364,7 @@ int add_to_db(const char* total_time)
     if (fp != NULL) {
         fprintf(fp, "1,%s,%s\n", date, total_time);
         fclose(fp);
+        sanatize_db(db_path);
         return success;
     }
 
