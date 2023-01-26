@@ -29,6 +29,9 @@ void panic(Error error) {
   if (error == INVALID_BREAK_TIME)
     strcpy(error_str, "Unable to accept break time argument");
 
+  if (error == UNKNOW_ARGUMENT)
+    strcpy(error_str, "Unable to recognize argument");
+
   if (error == NO_PAPLAY)
     strcpy(error_str, "Unable to play notification sound. Paplay/notify-send "
                       "binary was not found.");

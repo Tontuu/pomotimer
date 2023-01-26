@@ -119,7 +119,7 @@ int print_stats()
     printf("|      %-20s%*s%*s\n", sessions_str, 7+trailing_space_count, time_str, 6-trailing_space_count, "|");
     printf("╰--------------------------------------╯\n");
     fclose(fp);
-    return 0; 
+    return 1; 
 }
 
 int main(int argc, char **argv) {
@@ -212,7 +212,9 @@ int main(int argc, char **argv) {
 
         if (strcmp(ap_cmd_str, "stats") == 0) {
             if (!print_stats())
-            return 1;
+       	    return 1;
+	    
+	    return 0;
         }
 
     } else {
